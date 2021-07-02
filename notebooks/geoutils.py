@@ -28,15 +28,8 @@
 from urllib.request import urlopen
 import os
 import sys
- 
-######## shortcut for downloads ###################################################################
-geodata = {"natural-earth": "http://naciscdn.org/naturalearth/packages/natural_earth_vector.gpkg.zip",
-           "natural-earth-raster-shaded": "https://www.naturalearthdata.com/http//www.naturalearthdata.com/download/10m/raster/NE1_HR_LC_SR_W_DR.zip",
-           "landsat-ch-25": "https://data.geo.admin.ch/ch.swisstopo.images-landsat25/data.zip",
-           "swissimage-25": "https://data.geo.admin.ch/ch.swisstopo.swissimage-25/data.zip",
-           "geonames": "https://download.geonames.org/export/dump/cities500.zip",
-           "bluemarble-jp2": "https://data.geopython.xyz/bluemarble/world.jp2"}
-###################################################################################################
+
+
 
 def download(url, destfile, overwrite=True):
     print("Downloading", destfile, "from", url)
