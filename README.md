@@ -16,7 +16,7 @@ And filter them by certain attributes, for example:
 
 ``df_krel = df_assets.query('variant == "krel"')``
 
-Because all extents are available as GeoPandas geomtry, it is quite easy to do spatial queries.
+Because all extents are available as GeoPandas geometry, it is quite easy to do spatial queries.
 
 ```python
 import shapely.wkt
