@@ -4,7 +4,7 @@
 #### Licensed under MIT License
 ###############################################################################
 #
-# Copyright (c) 2021 Martin Christen, martin.christen@fhnw.ch
+# Copyright (c) 2022 Martin Christen, martin.christen@fhnw.ch
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -52,6 +52,7 @@ import pandas as pd
 import geopandas as gpd
 from urllib.request import urlopen
 from shapely.geometry import shape
+import shapely.wkt
 import json
 
 
@@ -90,11 +91,33 @@ def do_download(url, verbose=True, cache=True):
 #------------------------------------------------------------------------------
 
 def getCollections(cache=True):
-    collections = baseurl + "/collections"
+    
+    baseurl = "https://data.geo.admin.ch/api/stac/v0.9"
 
-    result = do_download(collections,verbose=False,cache=cache)
+    url = baseurl + "/collections"
+    data = [] 
 
-    return pd.DataFrame.from_dict(result["collections"])
+    cnt = 0
+    done = False
+    while not done:
+        result = do_download(url, verbose=False,cache=cache)
+        data += result["collections"]
+        cnt += 1
+
+        url = ""
+        for link in result['links']:
+            if link['rel'] == 'next':
+                url = link['href']
+
+        if url == "":
+            done = True
+
+        #if limit>=cnt:
+        #    done = True
+
+
+    return pd.DataFrame.from_dict(data)
+
 
 #------------------------------------------------------------------------------
 
@@ -132,6 +155,7 @@ def getFeatures(collectionname, verbose=True, limit=0, cache=True):
             
         if limit>=cnt:
             done = True
+            
             
     result = pd.DataFrame.from_dict(features)
     result.rename(columns={'geometry':'raw_geometry'}, inplace=True)
@@ -279,7 +303,7 @@ def download(url, destfile, overwrite=True):
 # Das Resultat ist eine Liste mit 0 oder 1 URL-Zeichenetten.
 
 def getSwissalti3d_50cm_pt(lng, lat):
-    df = stac.getAssets("ch.swisstopo.swissalti3d")
+    df = getAssets("ch.swisstopo.swissalti3d")
 
     df_geotiff = df.query('type == "image/tiff; application=geotiff; profile=cloud-optimized"')
     df_geotiff = df_geotiff.query("gsd == 0.5")
@@ -289,7 +313,7 @@ def getSwissalti3d_50cm_pt(lng, lat):
 
     df_result = gpd.sjoin(df_geotiff, dfpoint, op='contains')
 
-    return stac.getUrlList(df_result)
+    return getUrlList(df_result)
 
 #------------------------------------------------------------------------------
 # Eine Hilfsfunktion, welche zu einem POLYGON die entsprechenden swissALTI3D Bilder zurückgibt.
@@ -297,7 +321,7 @@ def getSwissalti3d_50cm_pt(lng, lat):
 # Das Resultat ist eine Liste mit 0 oder n URL-Zeichenetten.
 
 def getSwissalti3d_50cm_poly(wkt):
-    df = stac.getAssets("ch.swisstopo.swissalti3d")
+    df = getAssets("ch.swisstopo.swissalti3d")
 
     df_geotiff = df.query('type == "image/tiff; application=geotiff; profile=cloud-optimized"')
     df_geotiff = df_geotiff.query("gsd == 0.5")
@@ -307,7 +331,7 @@ def getSwissalti3d_50cm_poly(wkt):
     dfpoly = gpd.GeoDataFrame(geometry=gpd.GeoSeries(polygon, crs="epsg:4326"))
     df_result = gpd.sjoin(df_geotiff, dfpoly, op='intersects')
     
-    return stac.getUrlList(df_result)
+    return getUrlList(df_result)
 
 #------------------------------------------------------------------------------
 
@@ -315,29 +339,29 @@ def getSwissalti3d_50cm_poly(wkt):
 # Das Resultat ist eine Liste mit 0 oder 1 URL-Zeichenetten.
 
 def getSwissimage_pt(lng, lat, gsd=0.1):
-    df = stac.getAssets("ch.swisstopo.swissimage-dop10")
+    df = getAssets("ch.swisstopo.swissimage-dop10")
 
-    df_geotiff = df_geotiff.query(f"gsd == {gsd}")
+    df_geotiff = df.query(f"gsd == {gsd}")
 
     point = shapely.geometry.Point(lng, lat)
     dfpoint = gpd.GeoDataFrame(geometry=gpd.GeoSeries(point, crs="epsg:4326"))
 
     df_result = gpd.sjoin(df_geotiff, dfpoint, op='contains')
 
-    return stac.getUrlList(df_result)
+    return getUrlList(df_result)
 
 #------------------------------------------------------------------------------
 
-def getSwissimag_poly(wkt, gsd=0.1):
-    df = stac.getAssets("ch.swisstopo.swissimage-dop10")
+def getSwissimage_poly(wkt, gsd=0.1):
+    df = getAssets("ch.swisstopo.swissimage-dop10")
 
-    df_geotiff = df_geotiff.query(f"gsd == {gsd}")
+    df_geotiff = df.query(f"gsd == {gsd}")
 
     polygon = shapely.wkt.loads(wkt)
     dfpoly = gpd.GeoDataFrame(geometry=gpd.GeoSeries(polygon, crs="epsg:4326"))
     df_result = gpd.sjoin(df_geotiff, dfpoly, op='intersects')
     
-    return stac.getUrlList(df_result)
+    return getUrlList(df_result)
 
 
 #------------------------------------------------------------------------------
