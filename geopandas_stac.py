@@ -160,6 +160,17 @@ def getFeatures(collectionname, verbose=True, limit=0, cache=True):
     result = pd.DataFrame.from_dict(features)
     result.rename(columns={'geometry':'raw_geometry'}, inplace=True)
     
+    ##-----
+    cc = []
+    def extractTime(data):
+        d=data["properties"]["datetime"]
+        cc.append(d)
+
+
+    result.apply(extractTime,axis=1);
+    result["datetime"] = cc
+    #-----
+    
     geom = []
     def convert_geometry(data):
         geom.append(shape(data['raw_geometry']))
@@ -185,15 +196,17 @@ def genAssets(features_df):
               'variant': [],
               'checksum': [],
               'geometry': [],
+              'datetime': [],
                }
 
     def iterateAssets(data):
         asset = data["assets"]
         geometry = data['geometry']
         bbox = data['bbox']
-        for key in asset:
+        ddatetime = data['datetime']
+        for key in asset:    
             name = asset[key]
-            
+    
             assetdata['name'].append(key)
             
             etype = name['type']
@@ -205,6 +218,7 @@ def genAssets(features_df):
             updated = name['updated']
             assetdata['created'].append(created)
             assetdata['updated'].append(updated)
+            assetdata['datetime'].append(ddatetime)
             
             href = name['href']
             assetdata['href'].append(href)
